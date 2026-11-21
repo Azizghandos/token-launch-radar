@@ -12,6 +12,10 @@
   var app = document.getElementById('board');
   var state = { q: '', category: 'all', chain: 'all', minTvl: 0, wl: false, rising: false, tab: 'pre-token', sort: 'implied', dir: -1, selected: null };
 
+  // The board as the export helpers see it: the currently filtered rows, in the
+  // current sort order. The export buttons below call this.
+  window.__RADAR_EXPORT_ROWS__ = function () { return sortedRows(rows()); };
+
   var usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
   function fmtUsd(n) {
     if (n === null || n === undefined || !isFinite(n)) return 'n/a';
@@ -302,6 +306,9 @@
     var rising = el('label', { class: 'check' }, el('input', { type: 'checkbox', checked: state.rising ? 'checked' : null, onchange: function () { state.rising = !state.rising; writeHash(); render(); } }), ' Rising only');
     var pre = el('button', { type: 'button', 'aria-pressed': state.tab === 'pre-token' ? 'true' : 'false', text: 'Pre-token', onclick: function () { state.tab = 'pre-token'; writeHash(); render(); } });
     var live = el('button', { type: 'button', 'aria-pressed': state.tab === 'live' ? 'true' : 'false', text: 'Live token', onclick: function () { state.tab = 'live'; writeHash(); render(); } });
+    var exportCsv = el('button', { type: 'button', text: 'Export CSV', onclick: function () { if (window.TokenRadarExport) window.TokenRadarExport.downloadCSV(window.__RADAR_EXPORT_ROWS__()); } });
+    var exportJson = el('button', { type: 'button', text: 'Export JSON', onclick: function () { if (window.TokenRadarExport) window.TokenRadarExport.downloadJSON(window.__RADAR_EXPORT_ROWS__()); } });
+    var copyLinkBtn = el('button', { type: 'button', text: 'Copy link', onclick: function () { if (window.TokenRadarExport) window.TokenRadarExport.copyLink(); } });
     var count = el('span', { class: 'count', text: state.tab === 'pre-token' ? rows().length + ' rows shown' : DATA.live.length + ' live-token protocols' });
     return el('div', { class: 'controls' },
       el('div', { class: 'field' }, el('label', { for: 'q', text: 'Search' }), search),
@@ -310,6 +317,7 @@
       el('div', { class: 'field' }, el('label', { for: 'mintvl', text: 'Minimum TVL' }), minTvl),
       el('div', { class: 'field checks' }, el('span', { class: 'sub', text: 'Narrow it' }), el('div', { class: 'check-row' }, wl, rising)),
       el('div', { class: 'field' }, el('span', { class: 'sub', text: 'Token status' }), el('div', { class: 'tabs' }, pre, live)),
+      el('div', { class: 'field' }, el('span', { class: 'sub', text: 'Export' }), el('div', { class: 'tabs' }, exportCsv, exportJson, copyLinkBtn)),
       count
     );
   }
